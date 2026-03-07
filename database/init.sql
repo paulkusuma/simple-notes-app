@@ -1,11 +1,6 @@
--- Nama database: appdb
--- Nama user: appuser
--- Password: apppassword
-
--- Buat tabel 'items'
-CREATE TABLE IF NOT EXISTS items (
+CREATE TABLE IF NOT EXISTS notes (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

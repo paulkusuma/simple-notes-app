@@ -3,43 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Manajemen Item</title>
+    <title>Simple Notes App</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Aplikasi Manajemen Item</h1>
+            <h1>Simple Notes App</h1>
         </header>
-        
         <main>
-            <section class="add-item">
-                <h2>Tambah Item Baru</h2>
-                <form id="item-form">
+            <section class="note-form">
+                <h2 id="form-title">Buat Note Baru</h2>
+                <form id="note-form">
+                    <input type="hidden" id="note-id">
                     <div class="form-group">
-                        <label for="name">Nama:</label>
-                        <input type="text" id="name" name="name" required>
+                        <label for="title">Judul</label>
+                        <input type="text" id="title" name="title" required>
                     </div>
                     <div class="form-group">
-                        <label for="description">Deskripsi:</label>
-                        <textarea id="description" name="description"></textarea>
+                        <label for="content">Konten</label>
+                        <textarea id="content" name="content" rows="5"></textarea>
                     </div>
-                    <div class="form-group">
-                        <button type="submit" id="submit-btn">Tambah Item</button>
+                    <div class="form-actions">
+                        <button type="submit" id="submit-btn">Simpan</button>
                         <button type="button" id="cancel-btn" class="hidden">Batal</button>
                     </div>
                 </form>
             </section>
             
-            <section class="items-list">
-                <h2>Daftar Item</h2>
-                <div id="loading" class="hidden">Memuat data...</div>
-                <div id="error-message" class="error hidden"></div>
-                <div id="items-container"></div>
+            <section class="notes-list">
+                <h2>Daftar Notes</h2>
+                <div id="notes-container"></div>
             </section>
         </main>
     </div>
-    
     <script src="script.js"></script>
 </body>
 </html>
