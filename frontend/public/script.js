@@ -1,162 +1,144 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Elemen DOM
-    const itemForm = document.getElementById('item-form');
-    const nameInput = document.getElementById('name');
-    const descriptionInput = document.getElementById('description');
+document.addEventListener('DOMContentLoaded', () => {
+    const API_URL = '/api/notes';
+    const noteForm = document.getElementById('note-form');
+    const formTitle = document.getElementById('form-title');
+    const noteIdInput = document.getElementById('note-id');
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
     const submitBtn = document.getElementById('submit-btn');
     const cancelBtn = document.getElementById('cancel-btn');
-    const itemsContainer = document.getElementById('items-container');
-    const loadingElement = document.getElementById('loading');
-    const errorMessage = document.getElementById('error-message');
-    
-    // State
-    let editingItemId = null;
-    
-    // Base URL API backend
-    const API_BASE_URL = 'http://localhost:3000/api';
-    
-    // Inisialisasi aplikasi
-    fetchItems();
-    
-    // Event Listeners
-    itemForm.addEventListener('submit', handleFormSubmit);
-    cancelBtn.addEventListener('click', cancelEdit);
-    
-    // Fungsi-fungsi
-    async function fetchItems() {
-        showLoading(true);
-        hideError();
-        
+    const notesContainer = document.getElementById('notes-container');
+
+    let isEditing = false;
+
+    // Fungsi untuk fetch dan render notes
+    const fetchAndRenderNotes = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/items`);
-            if (!response.ok) throw new Error('Gagal mengambil data');
-            
-            const items = await response.json();
-            renderItems(items);
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Gagal mengambil notes');
+            const notes = await response.json();
+            renderNotes(notes);
         } catch (error) {
-            showError(`Error: ${error.message}`);
-        } finally {
-            showLoading(false);
+            console.error(error);
+            notesContainer.innerHTML = '<p>Gagal memuat data.</p>';
         }
-    }
-    
-    function renderItems(items) {
-        itemsContainer.innerHTML = '';
-        
-        if (items.length === 0) {
-            itemsContainer.innerHTML = '<p>Belum ada item. Tambah item pertama!</p>';
+    };
+
+    const renderNotes = (notes) => {
+        notesContainer.innerHTML = '';
+        if (notes.length === 0) {
+            notesContainer.innerHTML = '<p>Belum ada note. Buat yang pertama!</p>';
             return;
         }
-        
-        items.forEach(item => {
-            const itemElement = document.createElement('div');
-            itemElement.className = 'item';
-            itemElement.innerHTML = `
-                <div class="item-header">
-                    <div class="item-name">${escapeHtml(item.name)}</div>
+        notes.forEach(note => {
+            const noteEl = document.createElement('div');
+            noteEl.className = 'note-item';
+            noteEl.innerHTML = `
+                <div class="note-header">
+                    <div class="note-title">${escapeHtml(note.title)}</div>
+                    <div class="note-actions">
+                        <button class="edit-btn" data-id="${note.id}">Edit</button>
+                        <button class="delete-btn" data-id="${note.id}">Hapus</button>
+                    </div>
                 </div>
-                <div class="item-description">${escapeHtml(item.description || 'Tidak ada deskripsi')}</div>
-                <div class="item-actions">
-                    <button class="edit" data-id="${item.id}">Edit</button>
-                    <button class="delete" data-id="${item.id}">Hapus</button>
-                </div>
+                <div class="note-content">${escapeHtml(note.content || '')}</div>
             `;
-            
-            // Tambahkan event listener ke tombol
-            itemElement.querySelector('.edit').addEventListener('click', () => startEdit(item));
-            itemElement.querySelector('.delete').addEventListener('click', () => deleteItem(item.id));
-            
-            itemsContainer.appendChild(itemElement);
+            notesContainer.appendChild(noteEl);
         });
-    }
-    
-    async function handleFormSubmit(e) {
+    };
+
+    // Event listener untuk form submit
+    noteForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const name = nameInput.value.trim();
-        const description = descriptionInput.value.trim();
-        
-        if (!name) {
-            showError('Nama item wajib diisi.');
-            return;
-        }
-        
-        showLoading(true);
-        hideError();
-        
+        const title = titleInput.value.trim();
+        const content = contentInput.value.trim();
+        const id = noteIdInput.value;
+
+        if (!title) return;
+
+        const method = isEditing ? 'PUT' : 'POST';
+        const url = isEditing ? `${API_URL}/${id}` : API_URL;
+
         try {
-            const url = editingItemId ? `${API_BASE_URL}/items/${editingItemId}` : `${API_BASE_URL}/items`;
-            const method = editingItemId ? 'PUT' : 'POST';
-            
             const response = await fetch(url, {
-                method: method,
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, description })
+                body: JSON.stringify({ title, content }),
             });
-            
-            if (!response.ok) throw new Error('Gagal menyimpan item');
+
+            if (!response.ok) throw new Error('Gagal menyimpan note');
             
             resetForm();
-            fetchItems();
+            fetchAndRenderNotes();
+
         } catch (error) {
-            showError(`Error: ${error.message}`);
-        } finally {
-            showLoading(false);
+            console.error(error);
+            alert('Gagal menyimpan note. Coba lagi.');
         }
-    }
+    });
+
+    // Event delegation untuk tombol edit dan hapus
+    notesContainer.addEventListener('click', (e) => {
+        const target = e.target;
+        const id = target.dataset.id;
+        if (!id) return;
+
+        if (target.classList.contains('edit-btn')) {
+            startEdit(id);
+        } else if (target.classList.contains('delete-btn')) {
+            deleteNote(id);
+        }
+    });
     
-    async function deleteItem(id) {
-        if (!confirm('Yakin ingin menghapus item ini?')) return;
-        
-        showLoading(true);
+    cancelBtn.addEventListener('click', resetForm);
+
+    const startEdit = async (id) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/items/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Gagal menghapus item');
+            const response = await fetch(`${API_URL}/${id}`);
+            if (!response.ok) throw new Error('Gagal mengambil note');
+            const note = await response.json();
             
-            fetchItems();
+            isEditing = true;
+            noteIdInput.value = note.id;
+            titleInput.value = note.title;
+            contentInput.value = note.content || '';
+            formTitle.textContent = 'Edit Note';
+            submitBtn.textContent = 'Update';
+            cancelBtn.classList.remove('hidden');
+            titleInput.focus();
         } catch (error) {
-            showError(`Error: ${error.message}`);
-        } finally {
-            showLoading(false);
+            console.error(error);
+            alert('Gagal memuat note untuk diedit.');
         }
-    }
-    
-    function startEdit(item) {
-        nameInput.value = item.name;
-        descriptionInput.value = item.description || '';
-        submitBtn.textContent = 'Update Item';
-        cancelBtn.classList.remove('hidden');
-        editingItemId = item.id;
-        itemForm.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    function cancelEdit() {
-        resetForm();
-    }
-    
-    function resetForm() {
-        itemForm.reset();
-        submitBtn.textContent = 'Tambah Item';
+    };
+
+    const deleteNote = async (id) => {
+        if (!confirm('Yakin ingin menghapus note ini?')) return;
+        try {
+            const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Gagal menghapus note');
+            fetchAndRenderNotes();
+        } catch (error) {
+            console.error(error);
+            alert('Gagal menghapus note.');
+        }
+    };
+
+    const resetForm = () => {
+        noteForm.reset();
+        noteIdInput.value = '';
+        isEditing = false;
+        formTitle.textContent = 'Buat Note Baru';
+        submitBtn.textContent = 'Simpan';
         cancelBtn.classList.add('hidden');
-        editingItemId = null;
-    }
-    
-    function showLoading(show) {
-        loadingElement.classList.toggle('hidden', !show);
-    }
-    
-    function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.classList.remove('hidden');
-    }
-    
-    function hideError() {
-        errorMessage.classList.add('hidden');
-    }
-    
-    function escapeHtml(text) {
+    };
+
+    const escapeHtml = (text) => {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
+    };
+
+    // Initial load
+    fetchAndRenderNotes();
 });
