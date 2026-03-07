@@ -1,0 +1,44 @@
+# Nama workflow yang akan muncul di tab Actions GitHub
+name: CI Build & Push Docker Image
+
+# Menentukan kapan workflow dijalankan
+on:
+  push:
+    branches:
+      - dev   # Pipeline hanya berjalan jika ada push ke branch dev
+
+jobs:
+  build:
+    # Runner yang digunakan GitHub untuk menjalankan job
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # Mengambil source code dari repository
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Login ke Docker Hub menggunakan secrets yang disimpan di repository
+    - name: Login Docker Hub
+      run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+    # Build Docker image untuk backend
+    # Image akan diberi tag menggunakan commit SHA agar unik
+    - name: Build Backend Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
+
+    # Push image backend ke Docker Hub registry
+    - name: Push Backend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+
+    # Build Docker image untuk frontend
+    - name: Build Frontend Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
+
+    # Push image frontend ke Docker Hub
+    - name: Push Frontend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}

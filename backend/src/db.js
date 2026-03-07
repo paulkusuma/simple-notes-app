@@ -1,27 +1,35 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'notesdb',
-  user: process.env.DB_USER || 'notesuser',
-  password: process.env.DB_PASSWORD || 'notespassword',
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
 });
 
+// Fungsi untuk menginisialisasi database dengan retry
 const initDB = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS notes (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        content TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('Tabel "notes" berhasil diinisialisasi atau sudah ada.');
-  } catch (error) {
-    console.error('Gagal menginisialisasi database:', error);
-  }
+    let retries = 5;
+    while (retries > 0) {
+        try {
+            // Coba koneksi ke database
+            const client = await pool.connect();
+            console.log('Koneksi ke database berhasil!');
+            client.release(); // Lepaskan koneksi kembali ke pool
+            return; // Keluar dari fungsi jika berhasil
+        } catch (err) {
+            console.error(`Gagal menginisialisasi database. Sisa percobaan: ${retries - 1}`, err.message);
+            retries -= 1;
+            // Tunggu 2 detik sebelum mencoba lagi
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+    // Jika semua percobaan gagal
+    throw new Error('Gagal terhubung ke database setelah beberapa percobaan.');
 };
 
-module.exports = { pool, initDB };
+module.exports = {
+    query: (text, params) => pool.query(text, params),
+    initDB,
+};
