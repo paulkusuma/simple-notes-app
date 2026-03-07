@@ -1,29 +1,22 @@
 const express = require('express');
 const cors = require('cors');
-const itemRoutes = require('./routes/itemRoutes');
-const { initDB } = require('./models/database');
+const { initDB } = require('./db');
+const notesRouter = require('./routes/notes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors()); // Mengizinkan request dari frontend
-app.use(express.json()); // Untuk membaca body JSON
+app.use(cors());
+app.use(express.json());
 
-// Routes
-app.use('/api', itemRoutes);
+app.use('/api/notes', notesRouter);
 
-// Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Backend service is running' });
+  res.status(200).json({ status: 'OK', service: 'Simple Notes Backend' });
 });
 
-// Inisialisasi database dan jalankan server
 initDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:${PORT}`);
+    console.log(`Backend berjalan di http://localhost:${PORT}`);
   });
-}).catch(err => {
-  console.error('Gagal menginisialisasi database', err);
-  process.exit(1);
 });
