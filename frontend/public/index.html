@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Manajemen Item</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aplikasi Manajemen Item</h1>
+        </header>
+        
+        <main>
+            <section class="add-item">
+                <h2>Tambah Item Baru</h2>
+                <form id="item-form">
+                    <div class="form-group">
+                        <label for="name">Nama:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Deskripsi:</label>
+                        <textarea id="description" name="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="submit-btn">Tambah Item</button>
+                        <button type="button" id="cancel-btn" class="hidden">Batal</button>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="items-list">
+                <h2>Daftar Item</h2>
+                <div id="loading" class="hidden">Memuat data...</div>
+                <div id="error-message" class="error hidden"></div>
+                <div id="items-container"></div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
