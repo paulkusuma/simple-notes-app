@@ -83,7 +83,7 @@ jobs:
       run:  docker exec notes-backend wget -qO- http://localhost:3000/health
 
     - name: Backend API Test
-      run:  docker exec notes-backend wget -qO- http://localhost:3000/notes
+      run:  docker exec notes-backend wget -qO- http://localhost:3000/api/notes
 
     - name: Frontend Test
       run:  curl -f http://localhost:8080
