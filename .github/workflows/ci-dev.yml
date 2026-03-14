@@ -83,14 +83,14 @@ jobs:
       run:  docker exec notes-backend wget -qO- http://localhost:3000/health
 
     - name: Backend API Test
-      run: curl -f http://localhost:3000/notes
+      run:  docker exec notes-backend wget -qO- http://localhost:3000/notes
 
     - name: Frontend Test
-      run: curl -f http://localhost:8080
+      run:  curl -f http://localhost:8080
 
     # STOP TEST
     - name: Stop Stack
-      run: docker compose down
+      run:  docker compose down
 
     #################################################
     # PUSH IMAGE
