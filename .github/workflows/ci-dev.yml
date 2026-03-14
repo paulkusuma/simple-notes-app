@@ -54,6 +54,8 @@ jobs:
         ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
         sleep 7
         docker ps
+        docker ps -a
+        docker logs frontend-test
         docker stop frontend-test
 
     # Push image frontend ke Docker Hub
