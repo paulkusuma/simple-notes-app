@@ -28,6 +28,15 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
 
+    # Test Docker Image Untuk Backend
+    - name: Test Backend Container
+      run: |
+        docker run -d -p 3000:3000 --name backend-test \
+        ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+        sleep 7
+        docker ps
+        docker stop backend-test 
+
     # Push image backend ke Docker Hub registry
     - name: Push Backend Image
       run: |
@@ -37,6 +46,15 @@ jobs:
     - name: Build Frontend Image
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
+
+    # Test Docker Image Untuk Frontend
+    - name: Test Frontend Container
+      run: |
+        docker run -d -p 8080:80 --name frontend-test \
+        ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
+        sleep 7
+        docker ps
+        docker stop frontend-test
 
     # Push image frontend ke Docker Hub
     - name: Push Frontend Image
