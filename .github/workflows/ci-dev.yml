@@ -80,7 +80,7 @@ jobs:
 
     # HEALTH CHECK
     - name: Backend Health Check
-      run:  docker exec notes-backend wget -q0- http://localhost:3000/health
+      run:  docker exec notes-backend wget -qO- http://localhost:3000/health
 
     - name: Backend API Test
       run: curl -f http://localhost:3000/notes
