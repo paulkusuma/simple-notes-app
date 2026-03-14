@@ -64,9 +64,10 @@ jobs:
         docker rm frontend
 
     #################################################
-    # INTEGRATION TEST (FULL STACK)
+    # INTEGRATION TEST and HEALTH CHECK (FULL STACK)
     #################################################
 
+    # RUN TEST
     - name: Run Full Stack Test
       run: |
         docker compose up -d
@@ -77,6 +78,17 @@ jobs:
         docker ps
         docker compose logs
 
+    # HEALTH CHECK
+    - name: Backend Health Check
+      run: curl -f http://localhost:3000/health
+
+    - name: Backend API Test
+      run: curl -f http://localhost:3000/notes
+
+    - name: Frontend Test
+      run: curl -f http://localhost:8080
+
+    # STOP TEST
     - name: Stop Stack
       run: docker compose down
 
