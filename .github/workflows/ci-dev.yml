@@ -1,5 +1,5 @@
 # Nama workflow yang akan muncul di tab Actions GitHub
-name: CI Build & Push Docker Image
+name: CI Build Test & Push Docker Image
 
 # Menentukan kapan workflow dijalankan
 on:
@@ -22,21 +22,112 @@ jobs:
     - name: Login Docker Hub
       run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
 
+    #################################################
+    # BUILD IMAGE
+    #################################################
+
     # Build Docker image untuk backend
     # Image akan diberi tag menggunakan commit SHA agar unik
     - name: Build Backend Image
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
 
-    # Push image backend ke Docker Hub registry
-    - name: Push Backend Image
-      run: |
-        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
-
     # Build Docker image untuk frontend
     - name: Build Frontend Image
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
+
+    #################################################
+    # UNIT TEST (SMOKE TEST PER CONTAINER)
+    #################################################
+
+    # Test Docker Image Untuk Backend
+    - name: Test Backend Container
+      run: |
+        docker run -d -p 3000:3000 --name backend \
+        ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+        sleep 5
+        docker ps
+        docker logs backend
+        docker stop backend
+        docker rm backend
+
+    # Test Docker Image Untuk Frontend
+    - name: Test Frontend Container
+      run: |
+        docker run -d -p 8080:80 --name frontend \
+        ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
+        sleep 5
+        docker ps
+        docker logs frontend
+        docker stop frontend
+        docker rm frontend
+
+    #################################################
+    # INTEGRATION TEST and HEALTH CHECK (FULL STACK)
+    #################################################
+
+    # RUN TEST
+    - name: Run Full Stack Test
+      run: |
+        docker compose up -d
+
+        # tunggu container siap
+        sleep 20
+
+        docker ps
+        docker compose logs
+
+    # HEALTH CHECK
+    - name: Backend Health Check
+      run:  docker exec notes-backend wget -qO- http://localhost:3000/health
+
+    - name: Backend API Test
+      run:  docker exec notes-backend wget -qO- http://localhost:3000/api/notes
+
+    - name: Frontend Test
+      run:  curl -f http://localhost:8080
+
+    # STOP TEST
+    - name: Stop Stack
+      run:  docker compose down
+
+    #################################################
+    # SECURITY SCAN
+    #################################################
+
+    # DEPENDENCY SCAN
+    - name: Dependency vulnerability scan
+      run: |
+        cd backend
+        npm install
+        npm audit --audit-level=high
+
+    # SECRET SCAN
+    - name: Secret scan
+      uses: gitleaks/gitleaks-action@v2
+
+    # DOCKER IMAGE VULNERABILITY SCAN
+    - name: Scan backend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+        severity: CRITICAL,HIGH
+
+    - name: Scan frontend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
+        severity: CRITICAL,HIGH
+
+    #################################################
+    # PUSH IMAGE
+    #################################################
+
+    # Push image backend ke Docker Hub registry
+    - name: Push Backend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
 
     # Push image frontend ke Docker Hub
     - name: Push Frontend Image
