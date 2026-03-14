@@ -117,7 +117,7 @@ jobs:
     - name: Scan frontend image
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{secrets.DOCKER_USER}}/notes-frontend:${{ github.sha }}
+        image-ref: ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
         severity: CRITICAL,HIGH
 
     #################################################
