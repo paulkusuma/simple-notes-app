@@ -54,8 +54,8 @@ jobs:
       run: |
         sleep 10
         docker ps
-        docker logs frontend
-        docker logs backend
+        docker logs frontend-test
+        docker logs backend-test
         docker stop $(docker ps -aq)
 
     # Push image backend ke Docker Hub registry
