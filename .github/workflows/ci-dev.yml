@@ -28,35 +28,40 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
 
-    # Test Docker Image Untuk Backend
-    - name: Test Backend Container
-      run: |
-        docker run -d -p 3000:3000 --name backend-test \
-        ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
-        sleep 7
-        docker ps
-        docker stop backend-test 
-
-    # Push image backend ke Docker Hub registry
-    - name: Push Backend Image
-      run: |
-        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
-
     # Build Docker image untuk frontend
     - name: Build Frontend Image
       run: |
         docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
 
+    # Create Docker Network
+    - name: Create Docker Network
+      run: docker network create notes-net
+
+    # Test Docker Image Untuk Backend
+    - name: Test Backend Container
+      run: |
+        docker run -d -p 3000:3000 --network notes-net --name backend-test \
+        ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+
     # Test Docker Image Untuk Frontend
     - name: Test Frontend Container
       run: |
-        docker run -d -p 8080:80 --name frontend-test \
+        docker run -d -p 8080:80 --network notes-net --name frontend-test \
         ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
-        sleep 7
+
+    # Check containers
+    - name: Check Containers
+      run: |
+        sleep 10
         docker ps
-        docker ps -a
-        docker logs frontend-test
-        docker stop frontend-test
+        docker logs frontend
+        docker logs backend
+        docker stop $(docker ps -aq)
+
+    # Push image backend ke Docker Hub registry
+    - name: Push Backend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
 
     # Push image frontend ke Docker Hub
     - name: Push Frontend Image
