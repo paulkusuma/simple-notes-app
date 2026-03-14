@@ -93,6 +93,34 @@ jobs:
       run:  docker compose down
 
     #################################################
+    # SECURITY SCAN
+    #################################################
+
+    # DEPENDENCY SCAN
+    - name: Dependency vulnerability scan
+      run: |
+        cd backend
+        npm install
+        npm audit --audit-level=high
+
+    # SECRET SCAN
+    - name: Secret scan
+      uses: gitleaks/gitleaks-action@v2
+
+    # DOCKER IMAGE VULNERABILITY SCAN
+    - name: Scan backend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: notes-backend:${{ github.sha }}
+        severity: CRITICAL,HIGH
+
+    - name: Scan frontend image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: notes-frontend:${{ github.sha }}
+        severity: CRITICAL,HIGH
+
+    #################################################
     # PUSH IMAGE
     #################################################
 
