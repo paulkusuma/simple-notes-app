@@ -44,7 +44,7 @@ jobs:
     # Test Docker Image Untuk Backend
     - name: Test Backend Container
       run: |
-        docker run -d -p 3000:3000 --network notes-net --name backend \
+        docker run -d -p 3000:3000 --name backend \
         ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
         sleep 5
         docker ps
@@ -55,7 +55,7 @@ jobs:
     # Test Docker Image Untuk Frontend
     - name: Test Frontend Container
       run: |
-        docker run -d -p 8080:80 --network notes-net --name frontend \
+        docker run -d -p 8080:80 --name frontend \
         ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
         sleep 5
         docker ps
