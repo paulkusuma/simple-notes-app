@@ -22,6 +22,16 @@ jobs:
     - name: Login Docker Hub
       run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
 
+    - name: Set image tag
+      run: |
+        if [[ "${GITHUB_REF##*/}" == "dev" ]]; then
+          echo "TAG=dev" >> $GITHUB_ENV
+        elif [[ "${GITHUB_REF##*/}" == "staging" ]]; then
+          echo "TAG=staging" >> $GITHUB_ENV
+        elif [[ "${GITHUB_REF##*/}" == "main" ]]; then
+          echo "TAG=prod" >> $GITHUB_ENV
+        fi
+
     #################################################
     # BUILD IMAGE
     #################################################
@@ -30,12 +40,21 @@ jobs:
     # Image akan diberi tag menggunakan commit SHA agar unik
     - name: Build Backend Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
+        docker build \
+          -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} \
+          -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ env.TAG }} \
+          -t ${{ secrets.DOCKER_USER }}/notes-backend:latest \
+          ./backend
 
     # Build Docker image untuk frontend
     - name: Build Frontend Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
+        docker build \
+        -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} \
+        -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ env.TAG }} \
+        -t ${{ secrets.DOCKER_USER }}/notes-frontend:latest \
+        ./frontend
+
 
     #################################################
     # UNIT TEST (SMOKE TEST PER CONTAINER)
@@ -128,8 +147,12 @@ jobs:
     - name: Push Backend Image
       run: |
         docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ env.TAG }}
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:latest
 
     # Push image frontend ke Docker Hub
     - name: Push Frontend Image
       run: |
         docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ env.TAG }}
+        docker push ${{ secrets.DOCKER_USER }}/notes-frontend:latest
