@@ -1,0 +1,107 @@
+# Nama workflow yang akan muncul di tab Actions GitHub
+name: CI Build Test & Push Docker Image
+
+# Menentukan kapan workflow dijalankan
+on:
+  push:
+    branches:
+      - dev   # Pipeline hanya berjalan jika ada push ke branch dev
+
+jobs:
+  build:
+    # Runner yang digunakan GitHub untuk menjalankan job
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # Mengambil source code dari repository
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Login ke Docker Hub menggunakan secrets yang disimpan di repository
+    - name: Login Docker Hub
+      run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+    #################################################
+    # BUILD IMAGE
+    #################################################
+
+    # Build Docker image untuk backend
+    # Image akan diberi tag menggunakan commit SHA agar unik
+    - name: Build Backend Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }} ./backend
+
+    # Build Docker image untuk frontend
+    - name: Build Frontend Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }} ./frontend
+
+    #################################################
+    # UNIT TEST (SMOKE TEST PER CONTAINER)
+    #################################################
+
+    # Test Docker Image Untuk Backend
+    - name: Test Backend Container
+      run: |
+        docker run -d -p 3000:3000 --name backend \
+        ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+        sleep 5
+        docker ps
+        docker logs backend
+        docker stop backend
+        docker rm backend
+
+    # Test Docker Image Untuk Frontend
+    - name: Test Frontend Container
+      run: |
+        docker run -d -p 8080:80 --name frontend \
+        ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
+        sleep 5
+        docker ps
+        docker logs frontend
+        docker stop frontend
+        docker rm frontend
+
+    #################################################
+    # INTEGRATION TEST (FULL STACK)
+    #################################################
+
+    - name: Run Full Stack Test
+      run: |
+        docker compose up -d
+
+        # tunggu container siap
+        sleep 20
+
+        docker ps
+        docker compose logs
+#################################################
+    # HEALTH CHECK
+    #################################################
+- name: Backend Health Check
+      run: curl -f http://localhost:3000/health
+
+    - name: Backend API Test
+      run: curl -f http://localhost:3000/notes
+
+    - name: Frontend Test
+      run: curl -f http://localhost:8080
+
+
+    - name: Stop Stack
+      run: docker compose down
+
+    #################################################
+    # PUSH IMAGE
+    #################################################
+
+    # Push image backend ke Docker Hub registry
+    - name: Push Backend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-backend:${{ github.sha }}
+
+    # Push image frontend ke Docker Hub
+    - name: Push Frontend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
