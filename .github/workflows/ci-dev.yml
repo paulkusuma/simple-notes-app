@@ -155,3 +155,9 @@ jobs:
         docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ github.sha }}
         docker push ${{ secrets.DOCKER_USER }}/notes-frontend:${{ env.TAG }}
         docker push ${{ secrets.DOCKER_USER }}/notes-frontend:latest
+
+
+  deploy:
+    needs: build # WAJIB: Menunggu job build selesai dengan sukses
+    uses: ./.github/workflows/cd-dev.yml # Memanggil file CD
+    secrets: inherit # Menurunkan semua secrets (DOCKER_USER, EC2_HOST, dll) ke workflow CD  
