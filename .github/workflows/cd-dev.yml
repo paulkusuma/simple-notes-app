@@ -21,6 +21,12 @@ jobs:
         script: |
           cd ~/simple-notes-app
 
+          echo "Login Docker..."
+          docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+
+          echo "Pull latest images..."
           docker-compose pull
+
+          echo "Restart containers..."
           docker-compose down
-          docker-compose up -d
+          docker-compose up -
