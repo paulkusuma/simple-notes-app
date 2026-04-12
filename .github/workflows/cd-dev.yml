@@ -17,8 +17,7 @@ jobs:
         script: |
           cd ~/simple-notes-app
 
-          echo "Login Docker..."
-          docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+          echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
 
           echo "Pull latest images..."
           docker-compose pull
