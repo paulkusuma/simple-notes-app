@@ -2,3 +2,4 @@
 ##  Perubahan 1 Test 
 ## Mau lanjut ke CD
 ##  TEST CD
+## TEST SERVER EC2
