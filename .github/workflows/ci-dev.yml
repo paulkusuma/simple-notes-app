@@ -1,5 +1,4 @@
-# Nama workflow yang akan muncul di tab Actions GitHub
-name: CI Build Test & Push Docker Image
+name: CI
 
 # Menentukan kapan workflow dijalankan
 on:
