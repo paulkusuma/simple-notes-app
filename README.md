@@ -507,6 +507,50 @@ Supaya:
 - aman untuk repo publik
 
 ---
+# ❗ Security Hardening
+```bash
+# Disable root login
+sudo nano /etc/ssh/sshd_config
+PermitRootLogin no
+PasswordAuthentication no
+sudo systemctl restart ssh
+```
+
+---
+# Diagram Network / Flow Nyata
+```bash
+User (Browser)
+   ↓
+Public IP (EC2)
+   ↓
+Nginx (Frontend Container :80)
+   ↓
+Backend (Node.js :3000)
+   ↓
+PostgreSQL (Internal Network)
+```
+
+---
+#  🛠️ Troubleshooting
+```bash
+# Cek container
+docker ps
+# Cek log backend
+docker logs notes-backend
+# Restart manual
+docker-compose down && docker-compose up -d
+```
+
+---
+# Kenapa Docker Compose di Server?
+
+- Image = hanya aplikasi
+- Compose = cara menjalankan (orchestration)
+- Lebih fleksibel dibanding hardcode di CI/CD
+- Bisa scale ke Kubernetes nanti
+
+---
+
 # 🔮 Future Improvements
 
 Pipeline ini dapat dikembangkan lebih lanjut dengan menambahkan:
