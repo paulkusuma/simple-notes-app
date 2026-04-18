@@ -338,14 +338,50 @@ Image ini kemudian dapat digunakan untuk:
 - Kubernetes workloads
 
 ---
-# ⚙️ CI Pipeline Stages
+# ⚙️ CD Pipeline Stages
 
-Pipeline CD berjalan otomatis setiap push ke branch dev
+Pipeline Continuous Deployment (CD) bertanggung jawab untuk mendeploy aplikasi secara otomatis ke server cloud setelah pipeline CI berhasil.
+Pada proyek ini, deployment dilakukan ke instance Amazon EC2 menggunakan SSH automation dari GitHub Actions.
 
 Workflow CD:
+```bash
+GitHub Actions (CI Success)
+│
+▼
+Trigger CD Workflow
+│
+▼
+SSH ke EC2 Server
+│
+├── Login Docker Hub
+├── Pull latest image
+├── Stop container lama
+├── Run container baru
+│
+▼
+Application Live di EC2
+```
+Pipeline ini memastikan bahwa:
+- Deployment hanya terjadi jika CI sukses
+- Server selalu menggunakan image terbaru
+- Deployment bersifat repeatable & otomatis
+
+CD menggunakan event:
+```bash
+on:
+  workflow_call:
+```
+Contoh pemanggilan dari CI:
+```bash
+jobs:
+  deploy:
+    needs: build
+    uses: ./.github/workflows/cd-dev.yml
+```
 
 ---
-🧠 Data Persistence (IMPORTANT)
+
+# 🧠 Data Persistence (IMPORTANT)
 
 Database menggunakan Docker Volume:
 ```bash
@@ -354,6 +390,43 @@ volumes:
 ```
 Data tidak hilang walaupun container dihapus
 Aman saat CI/CD redeploy
+
+---
+# 🔐 GitHub Secrets (WAJIB)
+
+Agar CD bisa berjalan, kamu harus set secrets di GitHub:
+Secret Name	Deskripsi
+EC2_HOST	Public IP EC2
+EC2_USER	Biasanya ubuntu
+EC2_SSH_KEY	Private key (tanpa .pem)
+DOCKER_USER	Username Docker Hub
+DOCKER_PASS	Password / Access Token
+
+---
+
+# 🖥️ Deployment Process (Step-by-Step)
+CD akan menjalankan script berikut di server EC2:
+
+```bash
+cd ~/simple-notes-app
+echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+docker-compose pull
+docker-compose down
+docker-compose up -d
+```
+
+Penjelasan:
+1. Login Docker Hub
+Agar server bisa pull image private/public terbaru
+2. Pull Latest Image
+docker-compose pull
+Ambil image terbaru dari registry
+3. Stop Container Lama
+docker-compose down
+Menghindari conflict & memastikan clean state
+4. Start Container Baru
+docker-compose up -d
+Menjalankan versi terbaru aplikasi
 
 ---
 
@@ -382,18 +455,66 @@ http://<EC2-PUBLIC-IP>
 ```
 
 ---
-# Docker Compose EC2
+# 🐳 Docker Compose di Server
 
+⚠️ Penting:
+Deployment menggunakan docker-compose yang ada di server EC2, bukan dari dalam image.
+Artinya:
+- Image hanya berisi aplikasi
+- Orkestrasi tetap dikontrol oleh server
+
+```bash
+backend:
+  image: <docker-user>/notes-backend:dev
+frontend:
+  image: <docker-user>/notes-frontend:dev
+```
+
+---
+# 🔐 FILE .env DI EC2 (WAJIB ADA)
+Di server EC2:
+```bash
+nano .env
+```
+Isi:
+```bash
+POSTGRES_DB=notesdb
+POSTGRES_USER=notesuser
+POSTGRES_PASSWORD=notespassword
+
+DB_HOST=database
+DB_PORT=5432
+DB_NAME=notesdb
+DB_USER=notesuser
+DB_PASSWORD=notespassword
+```
+
+---
+# 🧠 PENJELASAN PENTING
+1. Compose dibaca dari EC2, bukan dari image
+Yang dipakai saat deploy:
+```bash
+docker-compose up
+```
+2. Image ≠ Compose
+Komponen	Fungsi
+Docker image	isi aplikasi
+docker-compose	cara menjalankan
+3. Kenapa pakai ENV?
+Supaya:
+- tidak hardcode password
+- bisa beda environment (dev/prod)
+- aman untuk repo publik
 
 ---
 # 🔮 Future Improvements
 
 Pipeline ini dapat dikembangkan lebih lanjut dengan menambahkan:
-- Continuous Deployment (CD)
-- Automated deployment ke server
-- Kubernetes orchestration
-- Helm chart
-- GitOps workflow
-- Monitoring dan observability
-- Automated rollback
+
+- Multi-environment deployment (dev, staging, prod)
+- Blue-Green Deployment
+- Kubernetes (EKS)
+- Load Balancer + HTTPS (Nginx + Certbot)
+- Monitoring (Prometheus + Grafana)
+- Auto rollback jika deployment gagal
 ---
