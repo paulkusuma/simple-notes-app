@@ -396,11 +396,11 @@ Aman saat CI/CD redeploy
 
 Agar CD bisa berjalan, kamu harus set secrets di GitHub:
 Secret Name	Deskripsi
-EC2_HOST	Public IP EC2
-EC2_USER	Biasanya ubuntu
-EC2_SSH_KEY	Private key (tanpa .pem)
-DOCKER_USER	Username Docker Hub
-DOCKER_PASS	Password / Access Token
+- EC2_HOST	Public IP EC2
+- EC2_USER	Biasanya ubuntu
+- EC2_SSH_KEY	Private key (tanpa .pem)
+- DOCKER_USER	Username Docker Hub
+- DOCKER_PASS	Password / Access Token
 
 ---
 
@@ -478,15 +478,15 @@ nano .env
 ```
 Isi:
 ```bash
-POSTGRES_DB=notesdb
-POSTGRES_USER=notesuser
-POSTGRES_PASSWORD=notespassword
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
 
-DB_HOST=database
-DB_PORT=5432
-DB_NAME=notesdb
-DB_USER=notesuser
-DB_PASSWORD=notespassword
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
 ```
 
 ---
