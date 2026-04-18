@@ -64,9 +64,21 @@ GitHub Actions CI Pipeline
 │
 ▼
 Push Docker Images
+Docker Registry
 │
 ▼
-Docker Registry
+GitHub Actions (CD)
+│
+▼
+SSH → AWS EC2
+│
+▼
+docker-compose pull
+docker-compose down
+docker-compose up -d
+│
+▼
+🚀 Application Running on AWS EC2
 ```
 
 Pipeline memastikan bahwa **hanya image yang telah tervalidasi yang akan dipublish ke registry**.
@@ -94,9 +106,10 @@ simple-notes-app
 └── .github
     └── workflows
         └── ci-dev.yml
+        └── cd-dev.yml
 ```
 
-Folder `.github/workflows` berisi konfigurasi **CI pipeline menggunakan GitHub Actions**.
+Folder `.github/workflows` berisi konfigurasi **CI CD pipeline menggunakan GitHub Actions**.
 
 ---
 
@@ -108,6 +121,7 @@ Pastikan software berikut sudah terinstall sebelum menjalankan proyek:
 - Docker
 - Docker Compose
 - Git
+- AWS EC2 Instance
 
 Cek versi:
 
@@ -322,6 +336,54 @@ Image ini kemudian dapat digunakan untuk:
 - staging deployment
 - production deployment
 - Kubernetes workloads
+
+---
+# ⚙️ CI Pipeline Stages
+
+Pipeline CD berjalan otomatis setiap push ke branch dev
+
+Workflow CD:
+
+---
+🧠 Data Persistence (IMPORTANT)
+
+Database menggunakan Docker Volume:
+```bash
+volumes:
+  postgres_data:
+```
+Data tidak hilang walaupun container dihapus
+Aman saat CI/CD redeploy
+
+---
+
+# ☁️ Deployment ke AWS EC2
+
+Setup EC2:
+- Launch Ubuntu Instance
+- Install Docker & Docker Compose
+- Open port:
+  22 (SSH)
+  80 (HTTP)
+
+Clone Project di EC2:
+```bash
+git clone https://github.com/USERNAME/simple-notes-app.git
+cd simple-notes-app
+```
+
+Jalankan Aplikasi
+```bash
+docker-compose up -d
+```
+Akses:
+```bash
+http://<EC2-PUBLIC-IP>
+```
+
+---
+# Docker Compose EC2
+
 
 ---
 # 🔮 Future Improvements
